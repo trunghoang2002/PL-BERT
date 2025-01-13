@@ -118,9 +118,9 @@ and [line 415](https://github.com/yl4579/StyleTTS/blob/main/train_second.py#L415
             optimizer.step('bert')
 ```
 
-The pre-trained PL-BERT on Wikipedia for 1M steps can be downloaded at: [PL-BERT link](https://drive.google.com/file/d/19gzPmWKdmakeVszSNuUtVMMBaFYMQqJ7/view?usp=sharing).
+The pre-trained PL-BERT on Wikipedia for 1M steps can be downloaded at: [PL-BERT link](https://github.com/yl4579/StyleTTS2/tree/main/Utils/PLBERT).
 
-The demo on LJSpeech dataset along with the pre-modified StyleTTS repo and pre-trained models can be downloaded here: [StyleTTS Link](https://drive.google.com/file/d/18DU4JrW1rhySrIk-XSxZkXt2MuznxoM-/view?usp=sharing). This zip file contains the code modification above, the pre-trained PL-BERT model listed above, pre-trained StyleTTS w/ PL-BERT, pre-trained StyleTTS w/o PL-BERT and pre-trained HifiGAN on LJSpeech from the StyleTTS repo.
+The demo on LJSpeech dataset along with the pre-modified StyleTTS repo and pre-trained models can be downloaded here: [StyleTTS Link](https://huggingface.co/yl4579/StyleTTS/blob/main/LJSpeech_PLBERT/Models.zip). This zip file contains the code modification above, the pre-trained PL-BERT model listed above, pre-trained StyleTTS w/ PL-BERT, pre-trained StyleTTS w/o PL-BERT and pre-trained HifiGAN on LJSpeech from the StyleTTS repo.
 
 ## References
 - [NVIDIA/NeMo-text-processing](https://github.com/NVIDIA/NeMo-text-processing)
