@@ -57,12 +57,17 @@ class FilePathDataset(torch.utils.data.Dataset):
 
         phonemes = self.data[idx]['phonemes']
         input_ids = self.data[idx]['input_ids']
+        # Example:
+        # phonemes = ['dhɪs', 'ɪz', 'æn']
+        # input_ids = [101, 102, 103]  # Token đại diện cho các từ
 
         words = []
         labels = ""
         phoneme = ""
 
         phoneme_list = ''.join(phonemes)
+        # Example:
+        # phoneme_list = 'dhɪsɪzæn'
         masked_index = []
         for z in zip(phonemes, input_ids):
             z = list(z)
@@ -70,18 +75,27 @@ class FilePathDataset(torch.utils.data.Dataset):
             words.extend([z[1]] * len(z[0]))
             words.append(self.word_separator)
             labels += z[0] + " "
+            # Example:
+            # z[0] = 'dhɪs'
+            # z[1] = 101
+            # words += [101, 101, 101, 101, word_separator]
+            # labels += 'dhɪs '
 
             if np.random.rand() < self.word_mask_prob:
                 if np.random.rand() < self.replace_prob:
                     if np.random.rand() < (self.phoneme_mask_prob / self.replace_prob): 
+                        # replace all character_phoneme in the word with random character_phoneme
                         phoneme += ''.join([phoneme_list[np.random.randint(0, len(phoneme_list))] for _ in range(len(z[0]))])  # randomized
                     else:
+                        # keep unchange
                         phoneme += z[0]
                 else:
+                    # mask all phonemes in the word
                     phoneme += self.token_mask * len(z[0]) # masked
                     
                 masked_index.extend((np.arange(len(phoneme) - len(z[0]), len(phoneme))).tolist())
             else:
+                # keep unchange
                 phoneme += z[0] 
 
             phoneme += self.token_separator
@@ -90,6 +104,7 @@ class FilePathDataset(torch.utils.data.Dataset):
         mel_length = len(phoneme)
         masked_idx = np.array(masked_index)
         masked_index = []
+        # cut the head of the mel if it is too long
         if mel_length > self.max_mel_length:
             random_start = np.random.randint(0, mel_length - self.max_mel_length)
             phoneme = phoneme[random_start:random_start + self.max_mel_length]

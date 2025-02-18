@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 
 from nltk.tokenize import TweetTokenizer
@@ -76,16 +77,16 @@ def split_given_size(a, size):
 
 word_tokenize = TweetTokenizer().tokenize
 
-def normalize_split(text):
-    words = word_tokenize(text)
-    chunks = split_given_size(words, 500)
+# def normalize_split(text):
+#     words = word_tokenize(text)
+#     chunks = split_given_size(words, 500)
     
-    normalized_text = ""
-    for words in chunks:
-        sentence = TreebankWordDetokenizer().detokenize(words)
-        normalized_text += normalizer.normalize(sentence) + " "
+#     normalized_text = ""
+#     for words in chunks:
+#         sentence = TreebankWordDetokenizer().detokenize(words)
+#         normalized_text += normalizer.normalize(sentence) + " "
     
-    return normalized_text.replace(" ' s", "'s")
+#     return normalized_text.replace(" ' s", "'s")
 
 def remove_accents(input_str):
     nfkd_form = unicodedata.normalize('NFKD', input_str)
