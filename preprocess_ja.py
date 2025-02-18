@@ -7,6 +7,9 @@ from pebble import ProcessPool
 from concurrent.futures import TimeoutError
 import gc
 import ast
+from simple_loader import FilePathDataset, build_dataloader
+from tqdm import tqdm
+import pickle
 
 config_path = "Configs/config_ja.yml" # you can change it to anything else
 config = yaml.safe_load(open(config_path))
@@ -84,3 +87,41 @@ with ProcessPool(max_workers=max_workers) as pool:
 # print(a)
 # b = phonemize(a, tokenizer)
 # print(b)
+
+output = [dI for dI in os.listdir(root_directory) if os.path.isdir(os.path.join(root_directory,dI))]
+
+from datasets import load_from_disk, concatenate_datasets
+
+datasets = []
+
+for o in output:
+    directory = f"{root_directory}/{o}"
+    try:
+        shard = load_from_disk(directory)
+        datasets.append(shard)
+        print("%s loaded" % o)
+    except:
+        continue
+
+dataset = concatenate_datasets(datasets)
+dataset.save_to_disk(config['data_folder'])
+print('Dataset saved to %s' % config['data_folder'])
+
+file_data = FilePathDataset(dataset)
+loader = build_dataloader(file_data, num_workers=32, batch_size=128)
+
+special_token = config['dataset_params']['word_separator']
+
+unique_index = [special_token]
+for _, batch in enumerate(tqdm(loader)):
+    unique_index.extend(batch)
+    unique_index = list(set(unique_index))
+
+token_maps = {}
+for t in tqdm(unique_index):
+    word = tokenizer.decode([t])
+    token_maps[t] = {'word': word, 'token': unique_index.index(t)}
+
+with open(config['dataset_params']['token_maps'], 'wb') as handle:
+    pickle.dump(token_maps, handle)
+print('Token mapper saved to %s' % config['dataset_params']['token_maps'])
