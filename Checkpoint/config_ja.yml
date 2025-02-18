@@ -4,8 +4,7 @@ data_folder: "wiki40b_ja.processed"
 batch_size: 16
 save_interval: 5000
 log_interval: 10
-# num_process: 1 # number of GPUs
-num_process: 8 # if you run on TPUs (colab/kaggle)
+num_process: 1 # number of GPUs
 num_steps: 1000000
 
 dataset_params:
