@@ -24,6 +24,23 @@ import yaml
 import pickle
 from transformers import AutoTokenizer, AutoModel
 from accelerate import notebook_launcher
+import logging
+
+# Cấu hình logging để ghi ngay vào file
+logging.basicConfig(
+    filename='train_ja.log',
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    filemode='w'  # 'w' để ghi đè, 'a' để ghi tiếp vào file
+)
+
+logger = logging.getLogger()
+handler = logging.FileHandler('train_ja.log', mode='a')  # Ghi tiếp vào file
+handler.setLevel(logging.INFO)
+
+# Đảm bảo dữ liệu được ghi ngay lập tức
+handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+logger.addHandler(handler)
 
 config_path = "Configs/config_ja.yml" # you can change it to anything else
 config = yaml.safe_load(open(config_path))
@@ -93,7 +110,7 @@ def train():
         from collections import OrderedDict
         new_state_dict = OrderedDict()
         for k, v in state_dict.items():
-            name = k[7:] # remove `module.`
+            name = k[7:] # remove `module.` (when using DDP to save the model and load it back without DDP)
             new_state_dict[name] = v
 
         bert.load_state_dict(new_state_dict, strict=False)
@@ -106,6 +123,7 @@ def train():
     )
 
     accelerator.print('Start training...')
+    logger.info('Start training...')
 
     running_loss = 0
     
@@ -113,7 +131,7 @@ def train():
         curr_steps += 1
         
         words, labels, phonemes, input_lengths, masked_indices = batch
-        text_mask = length_to_mask(torch.Tensor(input_lengths))#.to(device)
+        text_mask = length_to_mask(torch.Tensor(input_lengths)).to(device)
         
         tokens_pred, words_pred = bert(phonemes, attention_mask=(~text_mask).int())
         
@@ -146,10 +164,13 @@ def train():
         if (iters+1)%log_interval == 0:
             accelerator.print ('Step [%d/%d], Loss: %.5f, Vocab Loss: %.5f, Token Loss: %.5f'
                     %(iters+1, num_steps, running_loss / log_interval, loss_vocab, loss_token))
+            logger.info('Step [%d/%d], Loss: %.5f, Vocab Loss: %.5f, Token Loss: %.5f'
+                    %(iters+1, num_steps, running_loss / log_interval, loss_vocab, loss_token))
             running_loss = 0
             
         if (iters+1)%save_interval == 0:
             accelerator.print('Saving..')
+            logger.info('Saving..')
 
             state = {
                 'net':  bert.state_dict(),
@@ -158,9 +179,15 @@ def train():
             }
 
             accelerator.save(state, log_dir + '/step_' + str(iters + 1) + '.t7')
+            logger.info('Saved to ' + log_dir +'step_' + str(iters + 1) + '.t7')
 
         if curr_steps > num_steps:
             return 
 
+# Set the specific GPU(s) to use (e.g., use GPU 1)
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ["NCCL_P2P_DISABLE"] = "1"  # Disable peer-to-peer communication
+os.environ["NCCL_IB_DISABLE"] = "1"  # Disable Infiniband
+config['num_process'] = 1
 while True:
     notebook_launcher(train, args=(), num_processes=config['num_process'], use_port=33389)
